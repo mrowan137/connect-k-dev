@@ -42,8 +42,7 @@ class Input(Form):
                                                         message="Select Human or Computer.",
                                                         values_formatter=None)])
 
-    
-    
+
 class ConnectK(object):
     def __init__(self, k=None, player_color=None, current_player=None, opponent=None,
                  M=10, N=17, board_=defaultdict(deque)):

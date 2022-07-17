@@ -1,10 +1,5 @@
 runtime: python38
 
 handlers:
-- url: /(.*\.(gif|png|jpg|ico|js|css|ttf))
-  static_files: \1
-  upload: (.*\.(gif|png|jpg|ico|js|css|ttf))
-
 - url: /css
   static_dir: css
-
