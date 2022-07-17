@@ -188,7 +188,7 @@ class ConnectK(object):
         best_move = 0
         score = float('-inf')
         for j in range(l, r+1):
-            # if it's a winning move for the computer, we'll take it
+            # if it's a winning move for the computer, we'll take it; a draw is OK
             curr = self.current_player_
             self.PlayMove_(j)
             computer_winner, _ = self.CheckForGameOver_(self.opponent_color_, forecast=True)
@@ -203,9 +203,8 @@ class ConnectK(object):
             self.UnplayMove_()
             self.ToggleCurrentPlayer_()
             if player_winner:
-                if j in self.board_ and self.board_[j] and self.board_[j][0] == self.player_color_:
-                    # infer it is a vertical win since we push into 
-                    # a spot that was previously the same color
+                if j in self.board_ and self.board_[j] and self.board_[j][0] == self.player_color_ and player_winning_move_i == 0:
+                    # this could be a vertical or horizontal victory, distinguish by the returned i location
                     blocking_move = j
                 else:
                     if ( j - 1 in self.board_
@@ -214,7 +213,7 @@ class ConnectK(object):
                         blocking_move = j - 1
                     else:
                         blocking_move = j + 1
-
+                
                 return blocking_move
             
             # otherwise, take a move that tries to maximize computer's contiguous blocks
@@ -223,11 +222,15 @@ class ConnectK(object):
             my_contiguous_blocks = self.CountAdjacentBlocks_(j, me)
             opponent_contiguous_blocks = self.CountAdjacentBlocks_(j, opponent)
             best_score_so_far = score
+            
             # this is just a weighting chosen on intuition, it could be experimented with
             score = max(0.5*my_contiguous_blocks - 0.5*opponent_contiguous_blocks, best_score_so_far)
-            best_move = j if score >= best_score_so_far else best_move
-            self.UnplayMove_()
 
+            # make sure we don't take a move that cause the other player to win
+            player_winner, _ = self.CheckForGameOver_(self.player_color_, forecast=True)
+            best_move = j if score >= best_score_so_far and not player_winner else best_move
+            self.UnplayMove_()
+            
         return best_move
 
     
