@@ -1,0 +1,4 @@
+Flask==2.1.2
+Flask-Caching==2.0.0
+WTForms==3.0.1
+uuid==1.30

@@ -1,2 +1,2 @@
 # connect-k-dev
-connect-k development
+Connect a horizontal or vertical line of length k to win.

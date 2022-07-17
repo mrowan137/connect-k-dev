@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+  <head>
+    <title>CONNECT-K</title>
+    <link href="/css/press-start-2p.css" rel="stylesheet" type="text/css">
+  </head>
+  <body style="text-align:center;">
+    <h1 style="text-align:center; font-family: 'Press Start 2P';">CONNECT-K</h1>
+    <p style="text-align:center; font-family: 'arial';">
+      Form a horizontal or vertical line of length k to win.
+    </p>
+  <form method=post action="">
+  <table style="margin-left: auto; margin-right: auto; font-family: 'arial';">
+    {% for field in form %}
+    <tr>
+      <!-- <td>{{ field.name }}</td> -->
+      <!-- <div style="width: 50%;"> -->
+        <td>{{ field.label }}</td>
+        <td> <div style="width:100%">{{ field }} </div> </td>
+      <!-- </div> -->
+    </tr>
+    {% endfor %}
+  </table>
+  <p style="text-align:center;"><input type=submit value=Start game></form></p>
+
+<p style="text-align:center;">
+  {% if result != None %}
+  <img style="margin-left: auto; margin-right: auto;" src="{{ result }}" width=500>
+  {% endif %}
+</p>
+
+</body>
+</html>
