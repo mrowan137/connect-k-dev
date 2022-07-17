@@ -223,7 +223,8 @@ class ConnectK(object):
             my_contiguous_blocks = self.CountAdjacentBlocks_(j, me)
             opponent_contiguous_blocks = self.CountAdjacentBlocks_(j, opponent)
             best_score_so_far = score
-            score = max(my_contiguous_blocks - opponent_contiguous_blocks, best_score_so_far)
+            # this is just a weighting chosen on intuition, it could be experimented with
+            score = max(0.2*my_contiguous_blocks - 0.8*opponent_contiguous_blocks, best_score_so_far)
             best_move = j if score != best_score_so_far else best_move
             self.UnplayMove_()
 
