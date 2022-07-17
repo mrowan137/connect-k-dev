@@ -167,7 +167,9 @@ class ConnectK(object):
         
         # unplay the move
         self.ToggleCurrentPlayer_()
-        self.board_[self.moves_list_.popleft()].popleft()
+        move = self.moves_list_.popleft()
+        self.board_[move].popleft()
+        if not self.board_[move]: del self.board_[move]
         
         
     def UpdateDisplay_(self):
@@ -184,19 +186,16 @@ class ConnectK(object):
         me = self.current_player_
         opponent = not me
         
-        # find the move that maximize my contiguous blocks
-        best_move = 0
-        score = float('-inf')
+        # if it's a winning move for computer, we'll take it; a draw is OK
         for j in range(l, r+1):
-            # if it's a winning move for the computer, we'll take it; a draw is OK
-            curr = self.current_player_
             self.PlayMove_(j)
             computer_winner, _ = self.CheckForGameOver_(self.opponent_color_, forecast=True)
             self.UnplayMove_()
             if computer_winner:
                 return j
-            
-            # if it's a winning move for the computer's opponent (the human), we'll block it
+
+        # if it's a winning move for the computer's opponent (the human), we'll block it
+        for j in range(l, r+1):
             self.ToggleCurrentPlayer_()
             self.PlayMove_(j)
             player_winner, player_winning_move_i = self.CheckForGameOver_(self.player_color_, forecast=True)
@@ -215,30 +214,41 @@ class ConnectK(object):
                         blocking_move = j + 1
                 
                 return blocking_move
-            
-            # otherwise, take a move that tries to maximize computer's contiguous blocks
-            # and minimize the human's contiguous blocks
+
+        # otherwise, take a move that tries to maximize computer's contiguous blocks
+        # and minimize the human's contiguous blocks
+        best_move = 0
+        score = float('-inf')
+        for j in range(l, r+1):
             self.PlayMove_(j)
             my_contiguous_blocks = self.CountAdjacentBlocks_(j, me)
             opponent_contiguous_blocks = self.CountAdjacentBlocks_(j, opponent)
             best_score_so_far = score
             
             # this is just a weighting chosen on intuition, it could be experimented with
-            score = max(0.5*my_contiguous_blocks - 0.5*opponent_contiguous_blocks, best_score_so_far)
+            # for computer to have more aggressive or defensive strategy;
+            # also add a small bonus for displacing an opponent piece
+            score = max(  0.0*my_contiguous_blocks
+                        - 1.0*opponent_contiguous_blocks
+                        + 1e-5*(len(self.board_[j]) >= 2 and self.board_[j][1] == opponent),
+                          best_score_so_far)
 
             # make sure we don't take a move that cause the other player to win
             player_winner, _ = self.CheckForGameOver_(self.player_color_, forecast=True)
-            best_move = j if score >= best_score_so_far and not player_winner else best_move
+            best_move = j if score > best_score_so_far and not player_winner else best_move
             self.UnplayMove_()
-            
+
         return best_move
 
     
     def CountAdjacentBlocks_(self, move, player):
         # vertical count
         i, count = 0, 0
-        while ( self.board_[move] and i < len(self.board_[move]) - 1):
-            count += (self.board_[move][i] == self.board_[move][i+1])
+        while ( self.board_[move]
+                and i < len(self.board_[move]) - 1
+                and self.board_[move][i] == player
+                and self.board_[move][i] == self.board_[move][i+1]):
+            count += 1
             i += 1
         
         # horizontal check
