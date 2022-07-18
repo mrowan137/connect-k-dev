@@ -373,6 +373,7 @@ def root():
     ck = None
     for i in range(4):
         ck = LoadGame()
+        ck.ResetBoard_()
         SaveGame(ck)
         
     if not ck: return redirect(url_for("root"))
