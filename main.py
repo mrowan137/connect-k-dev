@@ -35,10 +35,10 @@ class Input(Form):
 
     opponent = SelectField(label="Choose opponent: ",
                            default="Human",
-                           choices=["Human", "Computer (easy)", "Computer (unbeatable)"],
+                           choices=["Human", "Computer (easy)", "Computer (hard)"],
                            render_kw={'style': 'width: 100%'},
                            validators=[validators.InputRequired(),
-                                       validators.AnyOf(["Human", "Computer (easy)", "Computer (unbeatable)"],
+                                       validators.AnyOf(["Human", "Computer (easy)", "Computer (hard)"],
                                                         message="Select Human or a Computer.",
                                                         values_formatter=None)])
 
@@ -183,7 +183,7 @@ class ConnectK(object):
         
     def ComputeMove_(self, mode):
         if not self.moves_list_: return 0
-        if mode == "unbeatable":
+        if mode == "hard":
             # consider a move within the range of moves so far
             l, r = min(self.board_) - 1, max(self.board_) + 1
             me = self.current_player_
