@@ -86,6 +86,8 @@ class ConnectK(object):
         self.current_player_ = None
         self.M_, self.N_ = 10, 17
         self.board_display_ = [[""  for j in range(self.N_)] for i in range(self.M_)]
+        for j in range(1, self.N_): self.board_display_[self.M_ - 1][j] = center - self.N_//2 + j
+        for i in range(self.M_ - 2, -1, -1): self.board_display_[(self.M_ - 2) - i][0] = i
 
                 
     def CheckForGameOver_(self, player, forecast=False):
@@ -370,14 +372,11 @@ def root():
         response = make_response( render_template("input.html", form=form, result=None) )
 
     # warmup the cache
-    ck = None
-    for i in range(4):
+    for i in range(5):
         ck = LoadGame()
         ck.ResetBoard_()
         SaveGame(ck)
         
-    if not ck: return redirect(url_for("root"))
-    
     return response
     
     
