@@ -86,7 +86,7 @@ class ConnectK(object):
         self.current_player_ = None
         self.M_, self.N_ = 10, 17
         self.board_display_ = [[""  for j in range(self.N_)] for i in range(self.M_)]
-        for j in range(1, self.N_): self.board_display_[self.M_ - 1][j] = center - self.N_//2 + j
+        for j in range(1, self.N_): self.board_display_[self.M_ - 1][j] = 0 - self.N_//2 + j
         for i in range(self.M_ - 2, -1, -1): self.board_display_[(self.M_ - 2) - i][0] = i
 
                 
