@@ -35,11 +35,11 @@ class Input(Form):
 
     opponent = SelectField(label="Choose opponent: ",
                            default="Human",
-                           choices=["Human", "Computer"],
+                           choices=["Human", "Computer (easy)", "Computer (unbeatable)"],
                            render_kw={'style': 'width: 100%'},
                            validators=[validators.InputRequired(),
-                                       validators.AnyOf(["Human", "Computer"],
-                                                        message="Select Human or Computer.",
+                                       validators.AnyOf(["Human", "Computer (easy)", "Computer (unbeatable)"],
+                                                        message="Select Human or a Computer.",
                                                         values_formatter=None)])
 
 
@@ -181,66 +181,82 @@ class ConnectK(object):
         self.SetBoardDisplay_(self.M_, self.N_, self.moves_list_[0])
 
         
-    def ComputeMove_(self):
+    def ComputeMove_(self, mode):
         if not self.moves_list_: return 0
-        # consider a move within the range of moves so far
-        l, r = min(self.board_) - 1, max(self.board_) + 1
-        me = self.current_player_
-        opponent = not me
-        
-        # if it's a winning move for computer, we'll take it; a draw is OK
-        for j in range(l, r+1):
-            self.PlayMove_(j)
-            computer_winner, _ = self.CheckForGameOver_(self.opponent_color_, forecast=True)
-            self.UnplayMove_()
-            if computer_winner:
-                return j
-
-        # if it's a winning move for the computer's opponent (the human), we'll block it
-        for j in range(l, r+1):
-            self.ToggleCurrentPlayer_()
-            self.PlayMove_(j)
-            player_winner, player_winning_move_i = self.CheckForGameOver_(self.player_color_, forecast=True)
-            self.UnplayMove_()
-            self.ToggleCurrentPlayer_()
-            if player_winner:
-                if j in self.board_ and self.board_[j] and self.board_[j][0] == self.player_color_ and player_winning_move_i == 0:
-                    # this could be a vertical or horizontal victory, distinguish by the returned i location
-                    blocking_move = j
-                else:
-                    if ( j - 1 in self.board_
-                         and player_winning_move_i < len(self.board_[j - 1])
-                         and self.board_[j - 1][player_winning_move_i] == self.player_color_):
-                        blocking_move = j - 1
-                    else:
-                        blocking_move = j + 1
-                
-                return blocking_move
-
-        # otherwise, take a move that tries to maximize computer's contiguous blocks
-        # and minimize the human's contiguous blocks
-        best_move = 0
-        score = float('-inf')
-        for j in range(l, r+1):
-            self.PlayMove_(j)
-            my_contiguous_blocks = self.CountAdjacentBlocks_(j, me)
-            opponent_contiguous_blocks = self.CountAdjacentBlocks_(j, opponent)
-            best_score_so_far = score
+        if mode == "unbeatable":
+            # consider a move within the range of moves so far
+            l, r = min(self.board_) - 1, max(self.board_) + 1
+            me = self.current_player_
+            opponent = not me
             
-            # this is just a weighting chosen on intuition, it could be experimented with
-            # for computer to have more aggressive or defensive strategy;
-            # also add a small bonus for displacing an opponent piece
-            score = max(  0.0*my_contiguous_blocks
-                        - 1.0*opponent_contiguous_blocks
-                        + 1e-5*(len(self.board_[j]) >= 2 and self.board_[j][1] == opponent),
-                          best_score_so_far)
+            # if it's a winning move for computer, we'll take it; a draw is OK
+            for j in range(l, r+1):
+                self.PlayMove_(j)
+                computer_winner, _ = self.CheckForGameOver_(self.opponent_color_, forecast=True)
+                self.UnplayMove_()
+                if computer_winner:
+                    return j
+                
+            return self.moves_list_[0]
+        
+        elif mode == "easy":
+            # like above, check for win or draw
+            l, r = min(self.board_) - 1, max(self.board_) + 1
+            me = self.current_player_
+            opponent = not me
+            
+            for j in range(l, r+1):
+                self.PlayMove_(j)
+                computer_winner, _ = self.CheckForGameOver_(self.opponent_color_, forecast=True)
+                self.UnplayMove_()
+                if computer_winner:
+                    return j
+                
+            # if it's a winning move for the computer's opponent (the human), we'll block it
+            for j in range(l, r+1):
+                self.ToggleCurrentPlayer_()
+                self.PlayMove_(j)
+                player_winner, player_winning_move_i = self.CheckForGameOver_(self.player_color_, forecast=True)
+                self.UnplayMove_()
+                self.ToggleCurrentPlayer_()
+                if player_winner:
+                    if j in self.board_ and self.board_[j] and self.board_[j][0] == self.player_color_ and player_winning_move_i == 0:
+                        # this could be a vertical or horizontal victory, distinguish by the returned i location
+                        blocking_move = j
+                    else:
+                        if ( j - 1 in self.board_
+                             and player_winning_move_i < len(self.board_[j - 1])
+                             and self.board_[j - 1][player_winning_move_i] == self.player_color_):
+                            blocking_move = j - 1
+                        else:
+                            blocking_move = j + 1
+                
+                    return blocking_move
 
-            # make sure we don't take a move that cause the other player to win
-            player_winner, _ = self.CheckForGameOver_(self.player_color_, forecast=True)
-            best_move = j if score > best_score_so_far and not player_winner else best_move
-            self.UnplayMove_()
-
-        return best_move
+            # otherwise, take a move that tries to maximize computer's contiguous blocks
+            # and minimize the human's contiguous blocks
+            best_move = 0
+            score = float('-inf')
+            for j in range(l, r+1):
+                self.PlayMove_(j)
+                my_contiguous_blocks = self.CountAdjacentBlocks_(j, me)
+                opponent_contiguous_blocks = self.CountAdjacentBlocks_(j, opponent)
+                best_score_so_far = score
+                
+                # this is just a weighting chosen on intuition, it could be experimented with
+                # for computer to have more aggressive or defensive strategy;
+                # also add a small bonus for displacing an opponent piece
+                score = max(  0.0*my_contiguous_blocks
+                              - 1.0*opponent_contiguous_blocks
+                              + 1e-5*(len(self.board_[j]) >= 2 and self.board_[j][1] == opponent),
+                              best_score_so_far)
+                
+                # make sure we don't take a move that cause the other player to win
+                player_winner, _ = self.CheckForGameOver_(self.player_color_, forecast=True)
+                best_move = j if score > best_score_so_far and not player_winner else best_move
+                self.UnplayMove_()
+                
+            return best_move
 
     
     def CountAdjacentBlocks_(self, move, player):
@@ -393,19 +409,20 @@ def play(k=None, player_color=None, first_player=None, opponent=None):
         ck.opponent_color_ = not ck.player_color_
         ck.current_player_ = ck.first_player_ = 0 if first_player == "Red" else 1
         ck.opponent_ = opponent
-        ck.computer_is_thinking = True if opponent == "Computer" and ck.player_color_ != ck.current_player_ else False
+        if opponent.find("Computer") != -1: ck.computer_difficulty_ = opponent.split(" ")[-1][1:-1]
+        ck.computer_is_thinking = True if opponent.find("Computer") != -1 and ck.player_color_ != ck.current_player_ else False
 
     # computer opponent's turn
     if ck.computer_is_thinking:
         msg = "<p><span style=\"color: {};\">Computer</span> is thinking...</p>".format("Crimson" if ck.current_player_ == 0 else "DarkBlue")
         response = make_response(render_template_string(BOARD_DISPLAY_TEMPLATE, ck=ck, msg=msg))
         ck.computer_is_thinking = False
-        mv = ck.ComputeMove_()
+        mv = ck.ComputeMove_(ck.computer_difficulty_)
         ck.PlayMove_(mv)
         SaveGame(ck)
         return response
 
-    if (ck.current_player_ != ck.player_color_ and ck.opponent_ == "Computer"):
+    if (ck.current_player_ != ck.player_color_ and ck.opponent_.find("Computer") != -1 ):
         ck.UpdateDisplay_()
         SaveGame(ck)
 
@@ -417,7 +434,7 @@ def play(k=None, player_color=None, first_player=None, opponent=None):
     winner, opponent_winner = None, None
     if "move" in request.form:
         ck.PlayMove_(int(request.form["move"]))
-        if ck.opponent_ == "Computer": ck.computer_is_thinking = True
+        if ck.opponent_.find("Computer") != -1: ck.computer_is_thinking = True
         
     # check if the game is over for the player
     winner, _ = ck.CheckForGameOver_(ck.player_color_)
@@ -434,13 +451,13 @@ def play(k=None, player_color=None, first_player=None, opponent=None):
             winner = winner if winner else opponent_winner
             msg = "<p><span style=\"color: {};\"> Player {}</span> ({}) is the winner!</p>".format("Crimson" if winner == "R" else "DarkBlue", winner, ck.opponent_ if winner == opponent_winner else "Human")
         
-        if ck.opponent_ == "Computer": ck.computer_is_thinking = False
+        if ck.opponent_.find("Computer") != -1: ck.computer_is_thinking = False
 
     else:
-        if (ck.current_player_ != ck.player_color_ and ck.opponent_ == "Computer"):
+        if (ck.current_player_ != ck.player_color_ and ck.opponent_.find("Computer") != -1):
             msg = "<p><span style=\"color: {};\">Computer</span> is thinking...</p>".format("Crimson" if ck.current_player_ == 0 else "DarkBlue")
         else:
-            msg = "<p>Player <span style=\"color: {};\">{}</span> it's your turn</p>".format( "Crimson" if ck.current_player_ == 0 else "DarkBlue", "R" if ck.current_player_ == 0 else "B")            
+            msg = "<p><span style=\"color: {};\">Player {}</span> it's your turn</p>".format( "Crimson" if ck.current_player_ == 0 else "DarkBlue", "R" if ck.current_player_ == 0 else "B")            
 
     response = make_response(render_template_string(BOARD_DISPLAY_TEMPLATE, ck=ck, msg=msg))
 
