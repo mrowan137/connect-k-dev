@@ -10,6 +10,7 @@ from uuid import uuid4
 class Input(Form):
     k = IntegerField(label="Select a value for k: ",
                      default=3,
+                     render_kw={'style': 'width: 100%'},
                      validators=[validators.InputRequired(),
                                  validators.NumberRange(min=1,
                                                         max=2147483647,
