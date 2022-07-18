@@ -274,7 +274,8 @@ BOARD_DISPLAY_TEMPLATE = """
 <html>
   <head>
     <title>CONNECT-K</title>
-    <link href="/css/press-start-2p.css" rel="stylesheet" type="text/css">
+    <link href="/static/style.css" rel="stylesheet" type="text/css">
+    <!-- <link rel="stylesheet" type="text/css" href="/static/style.css"> -->
      {{"<!--"|safe if not ck.computer_is_thinking}} <script>
        setTimeout(function(){window.location.href = "{{ url_for("play",
                                                                k=ck.k_,
@@ -291,18 +292,25 @@ BOARD_DISPLAY_TEMPLATE = """
     <form action="" method="POST">
       <table style="margin-left:auto; margin-right: auto;">
         {% for i in range(ck.M_) %}        
-        <tr>
-          {% for j in range(ck.N_) %}
-          <td>
-            <button type="submit" class="button" name="move" value="{{(0 if not ck.moves_list_ else ck.moves_list_[0]) - ck.N_//2 + j}}" 
-             style="height:50px;width:50px;background-color:{{"Crimson" if ck.board_display_[i][j] == "R" else ("DarkBlue" if ck.board_display_[i][j] == "B" else "transparent")}};
-                                           color:{{"white" if ck.board_display_[i][j] in ["R", "B"] else "black"}};  {{"border: 3px solid #FFC300;" if (j ==  ck.N_//2) and (i == ck.M_ - 2) and ck.moves_list_}} "
-             {{"disabled" if (i != ck.M_ - 2) or (j == 0) or ck.GameOver_() == True or ck.computer_is_thinking == True}}>
-              {{ck.board_display_[i][j]}}
-            </button>
-          </td>
-          {% endfor %}
-        </tr>
+          <tr>
+            {% for j in range(ck.N_) %}
+              <td>
+                <button type="submit" 
+                        class="button {{' big_on_hover' if (i == ck.M_ - 2) and (j != 0) and ck.GameOver_() == False and ck.computer_is_thinking == False else ""}}
+                                      {{' glowing_border' if (j ==  ck.N_//2) and (i == ck.M_ - 2) and ck.moves_list_}}" 
+                        name="move" value="{{(0 if not ck.moves_list_ else ck.moves_list_[0]) - ck.N_//2 + j}}" 
+                        style="height:50px; 
+                               width:50px;
+                               border-radius: 4px;
+                               background-color:{{"Crimson" if ck.board_display_[i][j] == "R" else ("DarkBlue" if ck.board_display_[i][j] == "B" else "transparent")}};
+                               color:{{"white" if ck.board_display_[i][j] in ["R", "B"] else "black"}};
+                               "
+                               {{"disabled" if (i != ck.M_ - 2) or (j == 0) or ck.GameOver_() == True or ck.computer_is_thinking == True}}>
+                  {{ck.board_display_[i][j]}}
+                </button>
+              </td>
+            {% endfor %}
+          </tr>
         {% endfor %}
       </table>
       <button type="submit" name="reset">Start a new game</button>
@@ -362,9 +370,11 @@ def root():
         response = make_response( render_template("input.html", form=form, result=None) )
 
     # warmup the cache
-    ck = LoadGame()
-    SaveGame(ck)
-    ck = LoadGame()
+    ck = None
+    for i in range(4):
+        ck = LoadGame()
+        SaveGame(ck)
+        
     if not ck: return redirect(url_for("root"))
     
     return response
